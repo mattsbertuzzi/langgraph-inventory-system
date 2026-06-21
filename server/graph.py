@@ -1,10 +1,10 @@
 from langgraph.graph import StateGraph, START, END
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import ToolNode
 from state import StockState
 from nodes.weather_getter import get_7day_forecast
 from nodes.tool_caller import call_tools
 from nodes.stock_setter import set_stock
+from nodes.forecast_recorder import record_forecast
 from tools.forecast_tools import get_sales_by_month, get_sales_by_week, get_sales_by_day, get_sales_by_weather, get_sales_by_temperature_range
 
 def build_graph():
@@ -17,6 +17,7 @@ def build_graph():
     graph.add_node('call_tools', call_tools)
     graph.add_node('tools', tool_node)
     graph.add_node('set_stocks', set_stock)
+    graph.add_node('record_forecast', record_forecast)
 
     def tool_router(state: StockState) -> str:
         last_message = state.get('messages')[-1]
@@ -31,7 +32,8 @@ def build_graph():
         'set_stocks': 'set_stocks',
     })
     graph.add_edge('tools', 'call_tools')
-    graph.add_edge('set_stocks', END)
+    graph.add_edge('set_stocks', 'record_forecast')
+    graph.add_edge('record_forecast', END)
 
     return graph.compile()
 

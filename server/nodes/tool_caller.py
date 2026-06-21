@@ -14,15 +14,11 @@ The product being forecasted is provided in the conversation context.
 
 CRITICAL RULES
 
-1. ALWAYS use the provided product_id when calling sales tools.
+1. Always filter tool calls by product_id.
 
 Every tool call must include:
 
 product_id=<target product_id>
-
-unless explicitly instructed otherwise.
-
-Never retrieve unfiltered sales data when a product_id is available.
 
 2. Your goal is data collection, NOT forecasting.
 
@@ -57,11 +53,20 @@ Select tool calls that correspond to:
 - The forecasted weather conditions
 - The forecasted temperature ranges
 
-5. Continue gathering evidence until sufficient data has been collected.
+5. NEW PRODUCT HANDLING.
+
+If all product-specific tool calls return empty results, the product has no sales history.
+
+In that case:
+- If a product category is provided in context, make a second round of queries using the category parameter only — without product_id — across the same time and weather dimensions.
+- Category-level data provides the baseline the downstream forecasting model needs.
+- If no category is provided, proceed directly to the completion signal.
+
+6. Continue gathering evidence until sufficient data has been collected.
 
 Do not stop after a single tool call if additional relevant information can be retrieved.
 
-6. Completion criteria.
+7. Completion criteria.
 
 Once sufficient historical sales information has been collected, respond with exactly:
 
@@ -71,16 +76,18 @@ Do not include any additional text.
 
 EXAMPLES
 
-Good:
+Good (known product):
 get_sales_by_month(month=7, product_id="ABC123")
 get_sales_by_week(week=29, product_id="ABC123")
 get_sales_by_weather(weather="SUNNY", product_id="ABC123")
 
-Bad:
-get_sales_by_month(month=7)
+Good (new product with category fallback):
+get_sales_by_month(month=7, category="Drinks")
+get_sales_by_week(week=29, category="Drinks")
+get_sales_by_weather(weather="SUNNY", category="Drinks")
 
 Bad:
-get_sales_by_week(week=29, category="BEVERAGES")
+get_sales_by_month(month=7)
 
 Bad:
 Forecast quantity will likely increase.
@@ -93,17 +100,18 @@ llm = ChatOpenAI(model='gpt-4o-mini', temperature=0.2)
 llm_with_tools = llm.bind_tools(tools)
 
 def call_tools(state: StockState) -> dict:
+    category = state.get('category')
+    category_line = f"Product Category: {category}" if category else "Product Category: Not provided — category-level fallback unavailable."
     messages = [
-    SystemMessage(
-        content=f"""
-        {SYSTEM_MESSAGE}
+        SystemMessage(
+            content=f"""
+            {SYSTEM_MESSAGE}
 
-        Target Product ID: {state['product_id']}
-
-        You MUST pass this exact product_id in every tool call.
-        """
-    ),
-    *state["messages"]
+            Target Product ID: {state['product_id']}
+            {category_line}
+            """
+        ),
+        *state["messages"]
     ]
     response = llm_with_tools.invoke(messages)
     return {'messages': [response]}

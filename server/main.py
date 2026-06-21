@@ -2,12 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import date
+from typing import Optional
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
 from graph import build_graph
+from classes.classes import Category
 
 app = FastAPI(title="Retail Demand Forecasting Agent")
 
@@ -25,17 +27,21 @@ class ForecastRequest(BaseModel):
     end_date: date
     latitude: float
     longitude: float
+    category: Optional[Category] = None
 
 
 @app.post("/forecast")
 def forecast(req: ForecastRequest):
     graph = build_graph()
-    result = graph.invoke({
+    state_input = {
         "product_id": req.product_id,
         "date_range": (req.start_date.isoformat(), req.end_date.isoformat()),
         "latitude": req.latitude,
         "longitude": req.longitude,
-    })
+    }
+    if req.category is not None:
+        state_input["category"] = req.category
+    result = graph.invoke(state_input)
     return {
         "predicted_quantity": result["predicted_quantity"],
         "confidence": result["confidence"],
