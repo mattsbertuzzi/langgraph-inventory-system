@@ -144,6 +144,6 @@ python3 generate_case_study.py
 
 ---
 
-Built by Matteo Bertuzzi — AI engineer working at the intersection of consumer behavior, AI, and retail intelligence.
+Built by Matteo Bertuzzi — AI engineer.
 
 [matteobertuzzi.com](#) · [LinkedIn](#)
