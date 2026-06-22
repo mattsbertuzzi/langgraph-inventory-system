@@ -131,6 +131,17 @@ data/
 └── grocery_sales.csv     # 5,000-record sample dataset
 ```
 
+## Case study
+
+[`FreshMart_Demand_Forecasting_Case_Study.pdf`](FreshMart_Demand_Forecasting_Case_Study.pdf) is a portfolio write-up applying this system to a fictitious US grocery retailer (FreshMart Inc., 187 stores). It covers the problem statement, system architecture, dataset analysis, illustrative performance targets, and projected financial impact. All business figures are illustrative; the technical components are real and functional.
+
+To regenerate the PDF from the source dataset:
+
+```bash
+pip install reportlab matplotlib pillow
+python3 generate_case_study.py
+```
+
 ---
 
 Built by Matteo Bertuzzi — AI engineer working at the intersection of consumer behavior, AI, and retail intelligence.
